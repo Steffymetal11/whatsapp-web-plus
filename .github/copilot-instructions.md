@@ -12,12 +12,12 @@ This is a Chrome extension (Manifest V3) for WhatsApp Web that enhances function
 
 ## Build Process
 1. **Build**: `npm run build` - runs Grunt to concatenate scripts into `packed.js`
-   - Concatenates files from `./scripts/` directory in specific order
-   - Wraps code in `window.plus_main` function
-   - Adds guard to prevent multiple loads
+    - Concatenates files from `./scripts/` directory in specific order
+    - Wraps code in `window.plus_main` function
+    - Adds guard to prevent multiple loads
 2. **Release**: `npm run release` - runs Gulp to package extension
-   - Creates build directory with unpacked extension
-   - Creates zip file for distribution
+    - Creates build directory with unpacked extension
+    - Creates zip file for distribution
 
 ## Code Style
 - **Linting**: ESLint with specific rules (see `eslint.config.js`)
