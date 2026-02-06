@@ -11,6 +11,7 @@
 |      See blue ticks without sending them      |      ✔       |
 | Forward message to unlimited number of groups |      ✔       |
 |       Revoke messages whenever you want       |      ✔       |
+|         Quick Replies (Copilot feature)       |      ✔       |
 
 ## Installing from GitHub
 
