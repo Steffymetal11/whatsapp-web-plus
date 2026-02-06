@@ -2,13 +2,15 @@ class QuickRepliesHook extends Hook {
     constructor() {
         super();
         this.quick_replies = [
-            { trigger: 'hello', reply: '👋 Hello! How can I help you?' },
-            { trigger: 'thanks', reply: '😊 You\'re welcome!' },
-            { trigger: 'yes', reply: '✅ Great!' },
-            { trigger: 'no', reply: '👍 Okay, no problem!' },
-            { trigger: 'busy', reply: '⏰ Sorry, I\'m busy right now. I\'ll get back to you later!' },
+            { reply: '👋 Hello! How can I help you?' },
+            { reply: '😊 You\'re welcome!' },
+            { reply: '✅ Great!' },
+            { reply: '👍 Okay, no problem!' },
+            { reply: '⏰ Sorry, I\'m busy right now. I\'ll get back to you later!' },
         ];
         this.button_element = null;
+        this.check_interval = null;
+        this.check_timeout = null;
     }
 
     register() {
@@ -24,6 +26,14 @@ class QuickRepliesHook extends Hook {
             return;
         }
         super.unregister();
+        if (this.check_interval) {
+            clearInterval(this.check_interval);
+            this.check_interval = null;
+        }
+        if (this.check_timeout) {
+            clearTimeout(this.check_timeout);
+            this.check_timeout = null;
+        }
         if (this.button_element) {
             this.button_element.remove();
             this.button_element = null;
@@ -33,17 +43,27 @@ class QuickRepliesHook extends Hook {
     inject_quick_reply_button() {
         // This function will inject a button into WhatsApp Web's compose area
         // We'll check periodically for the compose area to exist
-        const check_interval = setInterval(() => {
+        this.check_interval = setInterval(() => {
             const footer = document.querySelector('footer[class*="copyable-area"]');
             if (footer && !this.button_element) {
                 this.button_element = this.create_quick_reply_button();
                 footer.appendChild(this.button_element);
-                clearInterval(check_interval);
+                clearInterval(this.check_interval);
+                this.check_interval = null;
+                if (this.check_timeout) {
+                    clearTimeout(this.check_timeout);
+                    this.check_timeout = null;
+                }
             }
         }, 1000);
 
         // Clear interval after 30 seconds to avoid infinite checking
-        setTimeout(() => clearInterval(check_interval), 30000);
+        this.check_timeout = setTimeout(() => {
+            if (this.check_interval) {
+                clearInterval(this.check_interval);
+                this.check_interval = null;
+            }
+        }, 30000);
     }
 
     create_quick_reply_button() {
@@ -95,6 +115,14 @@ class QuickRepliesHook extends Hook {
         `;
         menu.appendChild(title);
 
+        // Function to clean up and close menu
+        const close_menu = (close_listener) => {
+            menu.remove();
+            if (close_listener) {
+                document.removeEventListener('click', close_listener);
+            }
+        };
+
         this.quick_replies.forEach(item => {
             const reply_item = document.createElement('div');
             reply_item.textContent = item.reply;
@@ -109,7 +137,7 @@ class QuickRepliesHook extends Hook {
             reply_item.onmouseout = () => reply_item.style.background = 'white';
             reply_item.onclick = () => {
                 this.insert_reply(item.reply);
-                menu.remove();
+                close_menu(close_on_click_outside);
             };
             menu.appendChild(reply_item);
         });
@@ -126,19 +154,21 @@ class QuickRepliesHook extends Hook {
             border-radius: 4px;
             cursor: pointer;
         `;
-        close_btn.onclick = () => menu.remove();
+        close_btn.onclick = () => close_menu(close_on_click_outside);
         menu.appendChild(close_btn);
 
         document.body.appendChild(menu);
 
         // Close menu when clicking outside
+        const close_on_click_outside = (e) => {
+            if (!menu.contains(e.target) && 
+                this.button_element && 
+                !this.button_element.contains(e.target)) {
+                close_menu(close_on_click_outside);
+            }
+        };
+        
         setTimeout(() => {
-            const close_on_click_outside = (e) => {
-                if (!menu.contains(e.target) && !this.button_element.contains(e.target)) {
-                    menu.remove();
-                    document.removeEventListener('click', close_on_click_outside);
-                }
-            };
             document.addEventListener('click', close_on_click_outside);
         }, 100);
     }
@@ -147,9 +177,20 @@ class QuickRepliesHook extends Hook {
         // Find the message input box and insert the reply
         const input_box = document.querySelector('div[contenteditable="true"][data-tab="10"]');
         if (input_box) {
-            input_box.textContent = reply_text;
+            // Append to existing content instead of replacing
+            const current_text = input_box.textContent;
+            const new_text = current_text ? current_text + ' ' + reply_text : reply_text;
+            input_box.textContent = new_text;
             input_box.dispatchEvent(new Event('input', { bubbles: true }));
             input_box.focus();
+            
+            // Move cursor to end
+            const range = document.createRange();
+            const sel = window.getSelection();
+            range.selectNodeContents(input_box);
+            range.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(range);
         }
     }
 }
