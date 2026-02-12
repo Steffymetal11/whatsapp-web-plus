@@ -8,6 +8,7 @@ class MessageExporter {
         this.exportFormat = 'json';
         this.includeMedia = true;
         this.MAX_EMAIL_BODY_SIZE = 5000; // Email body size limit in characters
+        this.MILLISECONDS_PER_SECOND = 1000; // Conversion factor for timestamps
     }
 
     /**
@@ -29,7 +30,7 @@ class MessageExporter {
             for (const msg of msgsToExport) {
                 const messageData = {
                     id: msg.id?.id || msg.id,
-                    timestamp: msg.t || Date.now() / 1000,
+                    timestamp: msg.t || Date.now() / this.MILLISECONDS_PER_SECOND,
                     from: msg.from?._serialized || msg.from,
                     sender: msg.sender?._serialized || msg.sender,
                     body: msg.body || '',
@@ -65,7 +66,7 @@ class MessageExporter {
         text += '='.repeat(50) + '\n\n';
 
         for (const msg of messages) {
-            const date = new Date(msg.timestamp * 1000);
+            const date = new Date(msg.timestamp * this.MILLISECONDS_PER_SECOND);
             const dateStr = date.toLocaleString();
             
             text += `[${dateStr}] ${msg.sender || 'Unknown'}: ${msg.body}\n`;
@@ -119,7 +120,7 @@ class MessageExporter {
 `;
 
         for (const msg of messages) {
-            const date = new Date(msg.timestamp * 1000);
+            const date = new Date(msg.timestamp * this.MILLISECONDS_PER_SECOND);
             html += `    <div class="message">
         <div class="timestamp">${date.toLocaleString()}</div>
         <div class="sender">${msg.sender || 'Unknown'}</div>

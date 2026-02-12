@@ -391,6 +391,7 @@ window.plus_main = () => {
             this.exportFormat = 'json';
             this.includeMedia = true;
             this.MAX_EMAIL_BODY_SIZE = 5000; // Email body size limit in characters
+            this.MILLISECONDS_PER_SECOND = 1000; // Conversion factor for timestamps
         }
     
         /**
@@ -412,7 +413,7 @@ window.plus_main = () => {
                 for (const msg of msgsToExport) {
                     const messageData = {
                         id: msg.id?.id || msg.id,
-                        timestamp: msg.t || Date.now() / 1000,
+                        timestamp: msg.t || Date.now() / this.MILLISECONDS_PER_SECOND,
                         from: msg.from?._serialized || msg.from,
                         sender: msg.sender?._serialized || msg.sender,
                         body: msg.body || '',
@@ -448,7 +449,7 @@ window.plus_main = () => {
             text += '='.repeat(50) + '\n\n';
     
             for (const msg of messages) {
-                const date = new Date(msg.timestamp * 1000);
+                const date = new Date(msg.timestamp * this.MILLISECONDS_PER_SECOND);
                 const dateStr = date.toLocaleString();
                 
                 text += `[${dateStr}] ${msg.sender || 'Unknown'}: ${msg.body}\n`;
@@ -502,7 +503,7 @@ window.plus_main = () => {
     `;
     
             for (const msg of messages) {
-                const date = new Date(msg.timestamp * 1000);
+                const date = new Date(msg.timestamp * this.MILLISECONDS_PER_SECOND);
                 html += `    <div class="message">
             <div class="timestamp">${date.toLocaleString()}</div>
             <div class="sender">${msg.sender || 'Unknown'}</div>
@@ -681,6 +682,8 @@ window.plus_main = () => {
             this.exporter = null;
             this.exportButton = null;
             this.EMAIL_MESSAGE_LIMIT = 100; // Email has size limits
+            this.checkHeaderInterval = null;
+            this.checkHeaderTimeout = null;
         }
     
         register() {
@@ -701,10 +704,11 @@ window.plus_main = () => {
          */
         addExportButton() {
             // Wait for the header to be available
-            const checkHeader = setInterval(() => {
+            this.checkHeaderInterval = setInterval(() => {
                 // Stop checking if button already exists
                 if (this.exportButton) {
-                    clearInterval(checkHeader);
+                    clearInterval(this.checkHeaderInterval);
+                    clearTimeout(this.checkHeaderTimeout);
                     return;
                 }
     
@@ -742,18 +746,30 @@ window.plus_main = () => {
                         headerButtons.appendChild(this.exportButton);
                     }
     
-                    clearInterval(checkHeader);
+                    clearInterval(this.checkHeaderInterval);
+                    clearTimeout(this.checkHeaderTimeout);
                 }
             }, 1000);
     
             // Clear interval after 10 seconds to avoid infinite checking
-            setTimeout(() => clearInterval(checkHeader), 10000);
+            this.checkHeaderTimeout = setTimeout(() => clearInterval(this.checkHeaderInterval), 10000);
         }
     
         /**
          * Remove export button
          */
         removeExportButton() {
+            // Clear any pending intervals/timeouts
+            if (this.checkHeaderInterval) {
+                clearInterval(this.checkHeaderInterval);
+                this.checkHeaderInterval = null;
+            }
+            if (this.checkHeaderTimeout) {
+                clearTimeout(this.checkHeaderTimeout);
+                this.checkHeaderTimeout = null;
+            }
+            
+            // Remove the button
             if (this.exportButton) {
                 this.exportButton.remove();
                 this.exportButton = null;

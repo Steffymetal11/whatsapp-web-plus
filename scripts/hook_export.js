@@ -8,6 +8,8 @@ class HookExport extends Hook {
         this.exporter = null;
         this.exportButton = null;
         this.EMAIL_MESSAGE_LIMIT = 100; // Email has size limits
+        this.checkHeaderInterval = null;
+        this.checkHeaderTimeout = null;
     }
 
     register() {
@@ -28,10 +30,11 @@ class HookExport extends Hook {
      */
     addExportButton() {
         // Wait for the header to be available
-        const checkHeader = setInterval(() => {
+        this.checkHeaderInterval = setInterval(() => {
             // Stop checking if button already exists
             if (this.exportButton) {
-                clearInterval(checkHeader);
+                clearInterval(this.checkHeaderInterval);
+                clearTimeout(this.checkHeaderTimeout);
                 return;
             }
 
@@ -69,18 +72,30 @@ class HookExport extends Hook {
                     headerButtons.appendChild(this.exportButton);
                 }
 
-                clearInterval(checkHeader);
+                clearInterval(this.checkHeaderInterval);
+                clearTimeout(this.checkHeaderTimeout);
             }
         }, 1000);
 
         // Clear interval after 10 seconds to avoid infinite checking
-        setTimeout(() => clearInterval(checkHeader), 10000);
+        this.checkHeaderTimeout = setTimeout(() => clearInterval(this.checkHeaderInterval), 10000);
     }
 
     /**
      * Remove export button
      */
     removeExportButton() {
+        // Clear any pending intervals/timeouts
+        if (this.checkHeaderInterval) {
+            clearInterval(this.checkHeaderInterval);
+            this.checkHeaderInterval = null;
+        }
+        if (this.checkHeaderTimeout) {
+            clearTimeout(this.checkHeaderTimeout);
+            this.checkHeaderTimeout = null;
+        }
+        
+        // Remove the button
         if (this.exportButton) {
             this.exportButton.remove();
             this.exportButton = null;
