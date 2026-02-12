@@ -151,7 +151,7 @@ class MessageExporter {
             '<': '&lt;',
             '>': '&gt;',
             '"': '&quot;',
-            "'": '&#039;'
+            '\'': '&#039;'
         };
         return text.replace(/[&<>"']/g, m => map[m]);
     }
@@ -211,22 +211,22 @@ class MessageExporter {
             const timestamp = new Date().toISOString().split('T')[0];
 
             switch (format) {
-                case 'text':
-                    content = this.formatAsText(messages);
-                    filename = `${chatName}_${timestamp}.txt`;
-                    mimeType = 'text/plain';
-                    break;
-                case 'html':
-                    content = this.formatAsHTML(messages);
-                    filename = `${chatName}_${timestamp}.html`;
-                    mimeType = 'text/html';
-                    break;
-                case 'json':
-                default:
-                    content = this.formatAsJSON(messages);
-                    filename = `${chatName}_${timestamp}.json`;
-                    mimeType = 'application/json';
-                    break;
+            case 'text':
+                content = this.formatAsText(messages);
+                filename = `${chatName}_${timestamp}.txt`;
+                mimeType = 'text/plain';
+                break;
+            case 'html':
+                content = this.formatAsHTML(messages);
+                filename = `${chatName}_${timestamp}.html`;
+                mimeType = 'text/html';
+                break;
+            case 'json':
+            default:
+                content = this.formatAsJSON(messages);
+                filename = `${chatName}_${timestamp}.json`;
+                mimeType = 'application/json';
+                break;
             }
 
             this.downloadAsFile(content, filename, mimeType);
