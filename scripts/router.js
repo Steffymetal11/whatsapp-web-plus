@@ -4,6 +4,7 @@ const hooks = {
     indicate_sender_os: new HookRendered(),
     special_tags: new HookSendMessage(),
     blue_ticks: new HookReceipts(),
+    export_messages: new HookExport(),
     settings_hook: new SettingsHook()
 };
 
