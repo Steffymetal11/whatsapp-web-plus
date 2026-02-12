@@ -5,7 +5,9 @@
   "main": "Gruntfile.js",
   "scripts": {
     "build": "grunt",
-    "release": "gulp"
+    "release": "gulp",
+    "firebase:deploy": "firebase deploy",
+    "firebase:login": "firebase login"
   },
   "repository": {
     "type": "git",
@@ -17,6 +19,9 @@
     "url": "https://github.com/Schwartzblat/WhatsApp-Web-Plus/issues"
   },
   "homepage": "https://github.com/Schwartzblat/WhatsApp-Web-Plus#readme",
+  "dependencies": {
+    "firebase": "^10.7.1"
+  },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
     "del": "^8.0.0",
@@ -28,6 +33,7 @@
     "gulp": "^5.0.0",
     "gulp-zip": "^6.0.0",
     "typescript-eslint": "^8.11.0",
-    "@microsoft/eslint-formatter-sarif": "^3.1.0"
+    "@microsoft/eslint-formatter-sarif": "^3.1.0",
+    "firebase-tools": "^13.0.2"
   }
 }

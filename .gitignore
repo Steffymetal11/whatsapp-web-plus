@@ -130,3 +130,9 @@ dist
 .idea
 build
 
+# Firebase
+.firebase/
+.firebaserc.local
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
