@@ -7,6 +7,9 @@ class HookExport extends Hook {
         super();
         this.exporter = null;
         this.exportButton = null;
+        this.EMAIL_MESSAGE_LIMIT = 100; // Email has size limits
+        this.checkHeaderInterval = null;
+        this.checkHeaderTimeout = null;
     }
 
     register() {
@@ -27,10 +30,17 @@ class HookExport extends Hook {
      */
     addExportButton() {
         // Wait for the header to be available
-        const checkHeader = setInterval(() => {
+        this.checkHeaderInterval = setInterval(() => {
+            // Stop checking if button already exists
+            if (this.exportButton) {
+                clearInterval(this.checkHeaderInterval);
+                clearTimeout(this.checkHeaderTimeout);
+                return;
+            }
+
             const header = document.querySelector('header[data-testid="conversation-header"]');
             
-            if (header && !this.exportButton) {
+            if (header) {
                 // Create export button
                 this.exportButton = document.createElement('div');
                 this.exportButton.className = 'export-chat-button';
@@ -62,18 +72,30 @@ class HookExport extends Hook {
                     headerButtons.appendChild(this.exportButton);
                 }
 
-                clearInterval(checkHeader);
+                clearInterval(this.checkHeaderInterval);
+                clearTimeout(this.checkHeaderTimeout);
             }
         }, 1000);
 
         // Clear interval after 10 seconds to avoid infinite checking
-        setTimeout(() => clearInterval(checkHeader), 10000);
+        this.checkHeaderTimeout = setTimeout(() => clearInterval(this.checkHeaderInterval), 10000);
     }
 
     /**
      * Remove export button
      */
     removeExportButton() {
+        // Clear any pending intervals/timeouts
+        if (this.checkHeaderInterval) {
+            clearInterval(this.checkHeaderInterval);
+            this.checkHeaderInterval = null;
+        }
+        if (this.checkHeaderTimeout) {
+            clearTimeout(this.checkHeaderTimeout);
+            this.checkHeaderTimeout = null;
+        }
+        
+        // Remove the button
         if (this.exportButton) {
             this.exportButton.remove();
             this.exportButton = null;
@@ -199,7 +221,7 @@ class HookExport extends Hook {
         });
 
         emailBtn.addEventListener('click', () => {
-            const limit = Math.min(parseInt(limitInput.value) || 100, 100); // Email has size limits
+            const limit = Math.min(parseInt(limitInput.value) || this.EMAIL_MESSAGE_LIMIT, this.EMAIL_MESSAGE_LIMIT);
             this.exporter.includeMedia = includeMediaCheckbox.checked;
             this.exporter.exportToEmail(limit);
             menu.remove();
