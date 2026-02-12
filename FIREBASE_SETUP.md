@@ -111,9 +111,19 @@ Depending on your needs, enable these Firebase services in the Firebase Console:
 
 ## Step 8: Deploy to Firebase Hosting (Optional)
 
+Before deploying, note that `firebase.json` is configured to deploy from the `build` directory. You'll need to create this directory and copy your extension files there, or modify `firebase.json` to point to your desired public directory.
+
 To deploy your extension to Firebase Hosting:
 
 ```bash
+# Option 1: Copy extension files to build directory
+mkdir -p build
+cp -r *.html *.css *.js icons build/
+
+# Option 2: Update firebase.json to use a different directory
+# Edit firebase.json and change "public": "build" to your preferred directory
+
+# Then deploy
 npm run firebase:deploy
 ```
 
@@ -124,6 +134,8 @@ firebase deploy
 ```
 
 Your extension will be available at: `https://your-project-id.web.app`
+
+**Security Note**: The hosting configuration uses a `build` directory to ensure that source files, configuration, and development files are not exposed. Only copy the files you want to make publicly accessible.
 
 ## Step 9: Environment Variables (Recommended)
 
@@ -164,5 +176,4 @@ With Firebase set up, you can now:
 
 - [Firebase Documentation](https://firebase.google.com/docs)
 - [Firebase Console](https://console.firebase.google.com/)
-- [Firebase Studio](https://studio.firebase.google.com/)
 - [Chrome Extension with Firebase Tutorial](https://firebase.google.com/docs/auth/web/chrome-extension)

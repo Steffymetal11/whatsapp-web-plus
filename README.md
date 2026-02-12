@@ -38,7 +38,7 @@ This project uses Firebase for authentication and payment tracking. To set up Fi
 ### 1. Create a Firebase Project
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Click "Add project" or use [Firebase Studio](https://studio.firebase.google.com/)
+2. Click "Add project"
 3. Enter project name: `whatsapp-web-plus`
 4. Follow the setup wizard to create your project
 
