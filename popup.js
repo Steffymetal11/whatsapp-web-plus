@@ -4,6 +4,7 @@ const settings_toggles = {
     'indicate_sender_os': 'Indicate sender OS',
     'special_tags': 'Special tags',
     'blue_ticks': 'Send blue ticks',
+    'export_messages': 'Export messages',
 };
 
 let active_settings = Object.fromEntries(Object.keys(settings_toggles).map(key => [key, true]));

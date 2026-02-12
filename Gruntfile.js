@@ -23,6 +23,8 @@ module.exports = function(grunt) {
                     './scripts/process_edited_messages.js',
                     './scripts/hook_send_message.js',
                     './scripts/hook_receipts.js',
+                    './scripts/export_messages.js',
+                    './scripts/hook_export.js',
                     './scripts/router.js',
                 ],
                 dest: './packed.js',

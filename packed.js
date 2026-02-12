@@ -381,12 +381,546 @@ window.plus_main = () => {
     }
     
 
+    /**
+     * Message Export Module
+     * Handles exporting WhatsApp messages to various services
+     */
+    
+    class MessageExporter {
+        constructor() {
+            this.exportFormat = 'json';
+            this.includeMedia = true;
+            this.MAX_EMAIL_BODY_SIZE = 5000; // Email body size limit in characters
+            this.MILLISECONDS_PER_SECOND = 1000; // Conversion factor for timestamps
+        }
+    
+        /**
+         * Extract messages from a chat
+         * @param {Object} chat - WhatsApp chat object
+         * @param {number} limit - Maximum number of messages to export
+         * @returns {Array} - Array of message objects
+         */
+        extractMessages(chat, limit = 1000) {
+            const messages = [];
+            
+            try {
+                const chatModel = chat.msgs;
+                if (!chatModel) return messages;
+    
+                const msgArray = chatModel.getModelsArray ? chatModel.getModelsArray() : [];
+                const msgsToExport = msgArray.slice(-limit);
+    
+                for (const msg of msgsToExport) {
+                    const messageData = {
+                        id: msg.id?.id || msg.id,
+                        timestamp: msg.t || Date.now() / this.MILLISECONDS_PER_SECOND,
+                        from: msg.from?._serialized || msg.from,
+                        sender: msg.sender?._serialized || msg.sender,
+                        body: msg.body || '',
+                        type: msg.type || 'chat',
+                        isForwarded: msg.isForwarded || false,
+                        hasMedia: msg.hasMedia || false,
+                    };
+    
+                    // Add media information if available
+                    if (msg.hasMedia && this.includeMedia) {
+                        messageData.mediaType = msg.type;
+                        messageData.caption = msg.caption || '';
+                        messageData.filename = msg.filename || '';
+                        messageData.mimetype = msg.mimetype || '';
+                    }
+    
+                    messages.push(messageData);
+                }
+            } catch (error) {
+                console.error('Error extracting messages:', error);
+            }
+    
+            return messages;
+        }
+    
+        /**
+         * Format messages as text
+         * @param {Array} messages - Array of message objects
+         * @returns {string} - Formatted text
+         */
+        formatAsText(messages) {
+            let text = 'WhatsApp Chat Export\n';
+            text += '='.repeat(50) + '\n\n';
+    
+            for (const msg of messages) {
+                const date = new Date(msg.timestamp * this.MILLISECONDS_PER_SECOND);
+                const dateStr = date.toLocaleString();
+                
+                text += `[${dateStr}] ${msg.sender || 'Unknown'}: ${msg.body}\n`;
+                
+                if (msg.hasMedia) {
+                    text += `  [Media: ${msg.mediaType}${msg.filename ? ` - ${msg.filename}` : ''}]\n`;
+                }
+                text += '\n';
+            }
+    
+            return text;
+        }
+    
+        /**
+         * Format messages as JSON
+         * @param {Array} messages - Array of message objects
+         * @returns {string} - JSON string
+         */
+        formatAsJSON(messages) {
+            return JSON.stringify({
+                exportDate: new Date().toISOString(),
+                messageCount: messages.length,
+                messages: messages
+            }, null, 2);
+        }
+    
+        /**
+         * Format messages as HTML
+         * @param {Array} messages - Array of message objects
+         * @returns {string} - HTML string
+         */
+        formatAsHTML(messages) {
+            let html = `<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>WhatsApp Chat Export</title>
+        <style>
+            body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+            .message { margin: 10px 0; padding: 10px; background: #f0f0f0; border-radius: 5px; }
+            .timestamp { color: #666; font-size: 0.9em; }
+            .sender { font-weight: bold; color: #075e54; }
+            .media { font-style: italic; color: #888; }
+        </style>
+    </head>
+    <body>
+        <h1>WhatsApp Chat Export</h1>
+        <p>Exported on: ${new Date().toLocaleString()}</p>
+        <p>Total messages: ${messages.length}</p>
+        <hr>
+    `;
+    
+            for (const msg of messages) {
+                const date = new Date(msg.timestamp * this.MILLISECONDS_PER_SECOND);
+                html += `    <div class="message">
+            <div class="timestamp">${date.toLocaleString()}</div>
+            <div class="sender">${msg.sender || 'Unknown'}</div>
+            <div class="body">${this.escapeHtml(msg.body)}</div>`;
+                
+                if (msg.hasMedia) {
+                    html += `
+            <div class="media">📎 Media: ${msg.mediaType}${msg.filename ? ` - ${msg.filename}` : ''}</div>`;
+                }
+                
+                html += `
+        </div>
+    `;
+            }
+    
+            html += `</body>
+    </html>`;
+    
+            return html;
+        }
+    
+        /**
+         * Escape HTML special characters
+         * @param {string} text - Text to escape
+         * @returns {string} - Escaped text
+         */
+        escapeHtml(text) {
+            // Handle null/undefined text
+            if (!text) {
+                return '';
+            }
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                '\'': '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+    
+        /**
+         * Download messages as a file
+         * @param {string} content - Content to download
+         * @param {string} filename - Name of the file
+         * @param {string} mimeType - MIME type of the file
+         */
+        downloadAsFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    
+        /**
+         * Export current chat
+         * @param {string} format - Export format (text, json, html)
+         * @param {number} limit - Maximum number of messages
+         */
+        exportCurrentChat(format = 'json', limit = 1000) {
+            try {
+                // Get current active chat
+                const Store = window.Store || {};
+                const Chat = Store.Chat;
+                
+                if (!Chat) {
+                    console.error('Chat store not found');
+                    return;
+                }
+    
+                const activeChat = Chat.getActive ? Chat.getActive() : null;
+                
+                if (!activeChat) {
+                    console.error('No active chat found');
+                    return;
+                }
+    
+                // Extract messages
+                const messages = this.extractMessages(activeChat, limit);
+                
+                if (messages.length === 0) {
+                    console.warn('No messages to export');
+                    return;
+                }
+    
+                // Format and download
+                let content, filename, mimeType;
+                const chatName = activeChat.contact?.name || activeChat.name || 'chat';
+                const timestamp = new Date().toISOString().split('T')[0];
+    
+                switch (format) {
+                case 'text':
+                    content = this.formatAsText(messages);
+                    filename = `${chatName}_${timestamp}.txt`;
+                    mimeType = 'text/plain';
+                    break;
+                case 'html':
+                    content = this.formatAsHTML(messages);
+                    filename = `${chatName}_${timestamp}.html`;
+                    mimeType = 'text/html';
+                    break;
+                case 'json':
+                default:
+                    content = this.formatAsJSON(messages);
+                    filename = `${chatName}_${timestamp}.json`;
+                    mimeType = 'application/json';
+                    break;
+                }
+    
+                this.downloadAsFile(content, filename, mimeType);
+                console.log(`Exported ${messages.length} messages as ${format}`);
+                
+            } catch (error) {
+                console.error('Error exporting chat:', error);
+            }
+        }
+    
+        /**
+         * Prepare messages for email
+         * @param {Array} messages - Array of message objects
+         * @returns {Object} - Email data
+         */
+        prepareForEmail(messages) {
+            const subject = `WhatsApp Chat Export - ${new Date().toLocaleDateString()}`;
+            const body = this.formatAsText(messages);
+            
+            return {
+                subject: encodeURIComponent(subject),
+                body: encodeURIComponent(body.substring(0, this.MAX_EMAIL_BODY_SIZE))
+            };
+        }
+    
+        /**
+         * Open email client with exported messages
+         * @param {number} limit - Maximum number of messages
+         */
+        exportToEmail(limit = 100) {
+            try {
+                const Store = window.Store || {};
+                const Chat = Store.Chat;
+                const activeChat = Chat.getActive ? Chat.getActive() : null;
+                
+                if (!activeChat) {
+                    console.error('No active chat found');
+                    return;
+                }
+    
+                const messages = this.extractMessages(activeChat, limit);
+                const emailData = this.prepareForEmail(messages);
+                
+                const mailtoLink = `mailto:?subject=${emailData.subject}&body=${emailData.body}`;
+                window.open(mailtoLink, '_blank');
+                
+            } catch (error) {
+                console.error('Error exporting to email:', error);
+            }
+        }
+    }
+    
+    // Export the class
+    window.MessageExporter = MessageExporter;
+    
+
+    /**
+     * Export Hook - Adds export functionality to WhatsApp Web
+     */
+    
+    class HookExport extends Hook {
+        constructor() {
+            super();
+            this.exporter = null;
+            this.exportButton = null;
+            this.EMAIL_MESSAGE_LIMIT = 100; // Email has size limits
+            this.checkHeaderInterval = null;
+            this.checkHeaderTimeout = null;
+        }
+    
+        register() {
+            super.register();
+            this.exporter = new MessageExporter();
+            this.addExportButton();
+            console.log('Export hook registered');
+        }
+    
+        unregister() {
+            super.unregister();
+            this.removeExportButton();
+            console.log('Export hook unregistered');
+        }
+    
+        /**
+         * Add export button to the chat header
+         */
+        addExportButton() {
+            // Wait for the header to be available
+            this.checkHeaderInterval = setInterval(() => {
+                // Stop checking if button already exists
+                if (this.exportButton) {
+                    clearInterval(this.checkHeaderInterval);
+                    clearTimeout(this.checkHeaderTimeout);
+                    return;
+                }
+    
+                const header = document.querySelector('header[data-testid="conversation-header"]');
+                
+                if (header) {
+                    // Create export button
+                    this.exportButton = document.createElement('div');
+                    this.exportButton.className = 'export-chat-button';
+                    this.exportButton.innerHTML = `
+                        <button style="
+                            background: #25d366;
+                            border: none;
+                            border-radius: 4px;
+                            color: white;
+                            cursor: pointer;
+                            padding: 8px 12px;
+                            margin: 0 8px;
+                            font-size: 14px;
+                            display: flex;
+                            align-items: center;
+                            gap: 6px;
+                        " title="Export Chat">
+                            <span>📤</span>
+                            <span>Export</span>
+                        </button>
+                    `;
+    
+                    // Add click event
+                    this.exportButton.addEventListener('click', () => this.showExportMenu());
+    
+                    // Add to header
+                    const headerButtons = header.querySelector('[data-testid="conversation-info-header"]');
+                    if (headerButtons) {
+                        headerButtons.appendChild(this.exportButton);
+                    }
+    
+                    clearInterval(this.checkHeaderInterval);
+                    clearTimeout(this.checkHeaderTimeout);
+                }
+            }, 1000);
+    
+            // Clear interval after 10 seconds to avoid infinite checking
+            this.checkHeaderTimeout = setTimeout(() => clearInterval(this.checkHeaderInterval), 10000);
+        }
+    
+        /**
+         * Remove export button
+         */
+        removeExportButton() {
+            // Clear any pending intervals/timeouts
+            if (this.checkHeaderInterval) {
+                clearInterval(this.checkHeaderInterval);
+                this.checkHeaderInterval = null;
+            }
+            if (this.checkHeaderTimeout) {
+                clearTimeout(this.checkHeaderTimeout);
+                this.checkHeaderTimeout = null;
+            }
+            
+            // Remove the button
+            if (this.exportButton) {
+                this.exportButton.remove();
+                this.exportButton = null;
+            }
+        }
+    
+        /**
+         * Show export menu with options
+         */
+        showExportMenu() {
+            // Remove existing menu if any
+            const existingMenu = document.getElementById('export-menu');
+            if (existingMenu) {
+                existingMenu.remove();
+                return;
+            }
+    
+            // Create menu
+            const menu = document.createElement('div');
+            menu.id = 'export-menu';
+            menu.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: white;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    padding: 20px;
+                    z-index: 10000;
+                    min-width: 300px;
+                ">
+                    <h3 style="margin: 0 0 15px 0; color: #075e54;">Export Chat</h3>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Format:</label>
+                        <select id="export-format" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="json">JSON (with metadata)</option>
+                            <option value="text">Text (plain format)</option>
+                            <option value="html">HTML (formatted view)</option>
+                        </select>
+                    </div>
+    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Number of messages:</label>
+                        <input type="number" id="export-limit" value="1000" min="1" max="10000" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="export-include-media" checked style="margin-right: 8px;">
+                            <span>Include media information</span>
+                        </label>
+                    </div>
+    
+                    <div style="display: flex; gap: 10px; justify-content: space-between;">
+                        <button id="export-download" style="
+                            flex: 1;
+                            background: #25d366;
+                            border: none;
+                            border-radius: 4px;
+                            color: white;
+                            cursor: pointer;
+                            padding: 10px;
+                            font-weight: bold;
+                        ">📥 Download</button>
+                        
+                        <button id="export-email" style="
+                            flex: 1;
+                            background: #34b7f1;
+                            border: none;
+                            border-radius: 4px;
+                            color: white;
+                            cursor: pointer;
+                            padding: 10px;
+                            font-weight: bold;
+                        ">📧 Email</button>
+                        
+                        <button id="export-cancel" style="
+                            background: #999;
+                            border: none;
+                            border-radius: 4px;
+                            color: white;
+                            cursor: pointer;
+                            padding: 10px;
+                            font-weight: bold;
+                        ">✖ Cancel</button>
+                    </div>
+    
+                    <div style="margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 4px; font-size: 12px;">
+                        <strong>Note:</strong> Large exports may take time. Media files are referenced but not included in the export.
+                    </div>
+                </div>
+                
+                <div style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0,0,0,0.5);
+                    z-index: 9999;
+                "></div>
+            `;
+    
+            document.body.appendChild(menu);
+    
+            // Add event listeners
+            const downloadBtn = document.getElementById('export-download');
+            const emailBtn = document.getElementById('export-email');
+            const cancelBtn = document.getElementById('export-cancel');
+            const formatSelect = document.getElementById('export-format');
+            const limitInput = document.getElementById('export-limit');
+            const includeMediaCheckbox = document.getElementById('export-include-media');
+    
+            downloadBtn.addEventListener('click', () => {
+                const format = formatSelect.value;
+                const limit = parseInt(limitInput.value) || 1000;
+                this.exporter.includeMedia = includeMediaCheckbox.checked;
+                this.exporter.exportCurrentChat(format, limit);
+                menu.remove();
+            });
+    
+            emailBtn.addEventListener('click', () => {
+                const limit = Math.min(parseInt(limitInput.value) || this.EMAIL_MESSAGE_LIMIT, this.EMAIL_MESSAGE_LIMIT);
+                this.exporter.includeMedia = includeMediaCheckbox.checked;
+                this.exporter.exportToEmail(limit);
+                menu.remove();
+            });
+    
+            cancelBtn.addEventListener('click', () => {
+                menu.remove();
+            });
+    
+            // Close on backdrop click
+            const backdrop = menu.querySelector('div:last-child');
+            backdrop.addEventListener('click', () => {
+                menu.remove();
+            });
+        }
+    }
+    
+
     const hooks = {
         keep_revoked_messages: new RenderableMessageHook(),
         keep_edited_messages: new EditMessageHook(),
         indicate_sender_os: new HookRendered(),
         special_tags: new HookSendMessage(),
         blue_ticks: new HookReceipts(),
+        export_messages: new HookExport(),
         settings_hook: new SettingsHook()
     };
     
