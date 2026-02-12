@@ -7,6 +7,7 @@ class MessageExporter {
     constructor() {
         this.exportFormat = 'json';
         this.includeMedia = true;
+        this.MAX_EMAIL_BODY_SIZE = 5000; // Email body size limit in characters
     }
 
     /**
@@ -146,6 +147,10 @@ class MessageExporter {
      * @returns {string} - Escaped text
      */
     escapeHtml(text) {
+        // Handle null/undefined text
+        if (!text) {
+            return '';
+        }
         const map = {
             '&': '&amp;',
             '<': '&lt;',
@@ -248,7 +253,7 @@ class MessageExporter {
         
         return {
             subject: encodeURIComponent(subject),
-            body: encodeURIComponent(body.substring(0, 5000)) // Email body size limit
+            body: encodeURIComponent(body.substring(0, this.MAX_EMAIL_BODY_SIZE))
         };
     }
 

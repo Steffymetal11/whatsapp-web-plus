@@ -7,6 +7,7 @@ class HookExport extends Hook {
         super();
         this.exporter = null;
         this.exportButton = null;
+        this.EMAIL_MESSAGE_LIMIT = 100; // Email has size limits
     }
 
     register() {
@@ -28,9 +29,15 @@ class HookExport extends Hook {
     addExportButton() {
         // Wait for the header to be available
         const checkHeader = setInterval(() => {
+            // Stop checking if button already exists
+            if (this.exportButton) {
+                clearInterval(checkHeader);
+                return;
+            }
+
             const header = document.querySelector('header[data-testid="conversation-header"]');
             
-            if (header && !this.exportButton) {
+            if (header) {
                 // Create export button
                 this.exportButton = document.createElement('div');
                 this.exportButton.className = 'export-chat-button';
@@ -199,7 +206,7 @@ class HookExport extends Hook {
         });
 
         emailBtn.addEventListener('click', () => {
-            const limit = Math.min(parseInt(limitInput.value) || 100, 100); // Email has size limits
+            const limit = Math.min(parseInt(limitInput.value) || this.EMAIL_MESSAGE_LIMIT, this.EMAIL_MESSAGE_LIMIT);
             this.exporter.includeMedia = includeMediaCheckbox.checked;
             this.exporter.exportToEmail(limit);
             menu.remove();

@@ -390,6 +390,7 @@ window.plus_main = () => {
         constructor() {
             this.exportFormat = 'json';
             this.includeMedia = true;
+            this.MAX_EMAIL_BODY_SIZE = 5000; // Email body size limit in characters
         }
     
         /**
@@ -529,6 +530,10 @@ window.plus_main = () => {
          * @returns {string} - Escaped text
          */
         escapeHtml(text) {
+            // Handle null/undefined text
+            if (!text) {
+                return '';
+            }
             const map = {
                 '&': '&amp;',
                 '<': '&lt;',
@@ -631,7 +636,7 @@ window.plus_main = () => {
             
             return {
                 subject: encodeURIComponent(subject),
-                body: encodeURIComponent(body.substring(0, 5000)) // Email body size limit
+                body: encodeURIComponent(body.substring(0, this.MAX_EMAIL_BODY_SIZE))
             };
         }
     
@@ -675,6 +680,7 @@ window.plus_main = () => {
             super();
             this.exporter = null;
             this.exportButton = null;
+            this.EMAIL_MESSAGE_LIMIT = 100; // Email has size limits
         }
     
         register() {
@@ -696,9 +702,15 @@ window.plus_main = () => {
         addExportButton() {
             // Wait for the header to be available
             const checkHeader = setInterval(() => {
+                // Stop checking if button already exists
+                if (this.exportButton) {
+                    clearInterval(checkHeader);
+                    return;
+                }
+    
                 const header = document.querySelector('header[data-testid="conversation-header"]');
                 
-                if (header && !this.exportButton) {
+                if (header) {
                     // Create export button
                     this.exportButton = document.createElement('div');
                     this.exportButton.className = 'export-chat-button';
@@ -867,7 +879,7 @@ window.plus_main = () => {
             });
     
             emailBtn.addEventListener('click', () => {
-                const limit = Math.min(parseInt(limitInput.value) || 100, 100); // Email has size limits
+                const limit = Math.min(parseInt(limitInput.value) || this.EMAIL_MESSAGE_LIMIT, this.EMAIL_MESSAGE_LIMIT);
                 this.exporter.includeMedia = includeMediaCheckbox.checked;
                 this.exporter.exportToEmail(limit);
                 menu.remove();
