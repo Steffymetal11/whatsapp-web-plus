@@ -12,6 +12,7 @@
 | Forward message to unlimited number of groups |      ✔       |
 |       Revoke messages whenever you want       |      ✔       |
 |    Export messages to email and files         |      ✔       |
+|    SMS to WhatsApp forwarding (guide)         |      ✔       |
 
 ## Installing from GitHub
 
@@ -47,3 +48,23 @@ For detailed instructions, see the [Export Guide](EXPORT_GUIDE.md).
 3. Click the **📤 Export** button in the chat header
 4. Choose your format and options
 5. Download or email your chat history!
+
+## SMS to WhatsApp Forwarding
+
+Want to automatically forward SMS messages (like verification codes) from one phone to WhatsApp? We've got you covered!
+
+The repository now includes a comprehensive guide with multiple methods to set up SMS-to-WhatsApp forwarding:
+- 📱 **Android Automation** (Tasker, MacroDroid)
+- ☁️ **Cloud Gateways** (Twilio)
+- 🔗 **Integration Services** (IFTTT, Zapier)
+- 📱 **SMS Forwarder Apps**
+- 🐍 **Python Scripts** (Termux)
+
+For detailed setup instructions and working examples, see the [SMS Forwarding Guide](SMS_FORWARDING_GUIDE.md).
+
+### Quick Start for SMS Forwarding
+1. Choose your preferred method from the guide
+2. Check the [examples directory](examples/) for ready-to-use scripts
+3. Follow the setup instructions for your chosen method
+4. Test with a sample SMS to ensure it works
+5. Start receiving verification codes on WhatsApp!
