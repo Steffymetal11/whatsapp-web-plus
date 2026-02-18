@@ -280,7 +280,7 @@ class MessageExporter {
             const emailData = this.prepareForEmail(messages, recipientEmail);
             
             const mailtoLink = emailData.to 
-                ? `mailto:${emailData.to}?subject=${emailData.subject}&body=${emailData.body}`
+                ? `mailto:${encodeURIComponent(emailData.to)}?subject=${emailData.subject}&body=${emailData.body}`
                 : `mailto:?subject=${emailData.subject}&body=${emailData.body}`;
             window.open(mailtoLink, '_blank');
             

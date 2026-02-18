@@ -663,7 +663,7 @@ window.plus_main = () => {
                 const emailData = this.prepareForEmail(messages, recipientEmail);
                 
                 const mailtoLink = emailData.to 
-                    ? `mailto:${emailData.to}?subject=${emailData.subject}&body=${emailData.body}`
+                    ? `mailto:${encodeURIComponent(emailData.to)}?subject=${emailData.subject}&body=${emailData.body}`
                     : `mailto:?subject=${emailData.subject}&body=${emailData.body}`;
                 window.open(mailtoLink, '_blank');
                 
@@ -713,7 +713,7 @@ window.plus_main = () => {
             try {
                 const data = await chrome.storage.sync.get('notification_email');
                 this.notificationEmail = data.notification_email || '';
-                console.log('Notification email loaded:', this.notificationEmail);
+                console.log('Notification email loaded from settings');
             } catch (error) {
                 console.error('Error loading notification email:', error);
                 this.notificationEmail = '';

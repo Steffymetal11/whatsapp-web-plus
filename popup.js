@@ -54,18 +54,35 @@ const isValidEmail = (email) => {
     return emailRegex.test(email);
 };
 
+// Show validation error
+const showEmailError = (message) => {
+    let errorDiv = document.getElementById('email-error');
+    if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.id = 'email-error';
+        errorDiv.style.color = 'red';
+        errorDiv.style.fontSize = '12px';
+        errorDiv.style.marginTop = '5px';
+        email_input.parentElement.appendChild(errorDiv);
+    }
+    errorDiv.textContent = message;
+    setTimeout(() => {
+        errorDiv.textContent = '';
+    }, 3000);
+};
+
 // Save notification email
 const saveNotificationEmail = async () => {
     const emailValue = email_input.value.trim();
     
     if (!isValidEmail(emailValue)) {
-        alert('Please enter a valid email address');
+        showEmailError('Please enter a valid email address');
         return false;
     }
     
     notification_email = emailValue;
     await chrome.storage.sync.set({notification_email: notification_email});
-    console.log('Notification email saved:', notification_email);
+    console.log('Notification email saved successfully');
     return true;
 };
 
