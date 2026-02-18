@@ -629,13 +629,15 @@ window.plus_main = () => {
         /**
          * Prepare messages for email
          * @param {Array} messages - Array of message objects
+         * @param {string} recipientEmail - Optional recipient email address
          * @returns {Object} - Email data
          */
-        prepareForEmail(messages) {
+        prepareForEmail(messages, recipientEmail = '') {
             const subject = `WhatsApp Chat Export - ${new Date().toLocaleDateString()}`;
             const body = this.formatAsText(messages);
             
             return {
+                to: recipientEmail,
                 subject: encodeURIComponent(subject),
                 body: encodeURIComponent(body.substring(0, this.MAX_EMAIL_BODY_SIZE))
             };
@@ -644,8 +646,9 @@ window.plus_main = () => {
         /**
          * Open email client with exported messages
          * @param {number} limit - Maximum number of messages
+         * @param {string} recipientEmail - Optional recipient email address
          */
-        exportToEmail(limit = 100) {
+        exportToEmail(limit = 100, recipientEmail = '') {
             try {
                 const Store = window.Store || {};
                 const Chat = Store.Chat;
@@ -657,9 +660,12 @@ window.plus_main = () => {
                 }
     
                 const messages = this.extractMessages(activeChat, limit);
-                const emailData = this.prepareForEmail(messages);
+                const emailData = this.prepareForEmail(messages, recipientEmail);
                 
-                const mailtoLink = `mailto:?subject=${emailData.subject}&body=${emailData.body}`;
+                const queryParams = `subject=${emailData.subject}&body=${emailData.body}`;
+                const mailtoLink = emailData.to 
+                    ? `mailto:${encodeURIComponent(emailData.to)}?${queryParams}`
+                    : `mailto:?${queryParams}`;
                 window.open(mailtoLink, '_blank');
                 
             } catch (error) {
@@ -684,11 +690,13 @@ window.plus_main = () => {
             this.EMAIL_MESSAGE_LIMIT = 100; // Email has size limits
             this.checkHeaderInterval = null;
             this.checkHeaderTimeout = null;
+            this.notificationEmail = '';
         }
     
         register() {
             super.register();
             this.exporter = new MessageExporter();
+            this.loadNotificationEmail();
             this.addExportButton();
             console.log('Export hook registered');
         }
@@ -697,6 +705,19 @@ window.plus_main = () => {
             super.unregister();
             this.removeExportButton();
             console.log('Export hook unregistered');
+        }
+    
+        /**
+         * Load notification email from Chrome storage
+         */
+        async loadNotificationEmail() {
+            try {
+                const data = await chrome.storage.sync.get('notification_email');
+                this.notificationEmail = data.notification_email || '';
+            } catch (error) {
+                console.error('Error loading notification email:', error);
+                this.notificationEmail = '';
+            }
         }
     
         /**
@@ -897,7 +918,7 @@ window.plus_main = () => {
             emailBtn.addEventListener('click', () => {
                 const limit = Math.min(parseInt(limitInput.value) || this.EMAIL_MESSAGE_LIMIT, this.EMAIL_MESSAGE_LIMIT);
                 this.exporter.includeMedia = includeMediaCheckbox.checked;
-                this.exporter.exportToEmail(limit);
+                this.exporter.exportToEmail(limit, this.notificationEmail);
                 menu.remove();
             });
     

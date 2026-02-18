@@ -1,4 +1,4 @@
-chrome.storage.sync.get('settings').then((data) => {
+chrome.storage.sync.get(['settings', 'notification_email']).then((data) => {
     if (data?.settings === undefined) {
         chrome.storage.sync.set({
             settings: {

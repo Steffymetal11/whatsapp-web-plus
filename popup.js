@@ -8,6 +8,7 @@ const settings_toggles = {
 };
 
 let active_settings = Object.fromEntries(Object.keys(settings_toggles).map(key => [key, true]));
+let notification_email = '';
 
 const on_toggle = async (event) => {
     active_settings[event.target.id] = event.target.checked;
@@ -44,11 +45,78 @@ const add_setting_toggle = (setting_key, title) => {
 
 
 const settings_section = document.getElementById('settings_section');
+const email_input = document.getElementById('notification_email');
 
-chrome.storage.sync.get('settings').then(data => {
+// Email validation constants
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const ERROR_DISPLAY_DURATION_MS = 3000;
+
+// Email validation function
+const isValidEmail = (email) => {
+    if (!email) return true; // Allow empty email
+    return EMAIL_REGEX.test(email);
+};
+
+// Show validation error
+const showEmailError = (message) => {
+    let errorDiv = document.getElementById('email-error');
+    if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.id = 'email-error';
+        errorDiv.style.color = 'red';
+        errorDiv.style.fontSize = '12px';
+        errorDiv.style.marginTop = '5px';
+        email_input.parentElement.appendChild(errorDiv);
+    }
+    errorDiv.textContent = message;
+    setTimeout(() => {
+        errorDiv.textContent = '';
+    }, ERROR_DISPLAY_DURATION_MS);
+};
+
+// Save notification email
+const saveNotificationEmail = async () => {
+    const emailValue = email_input.value.trim();
+    
+    if (!isValidEmail(emailValue)) {
+        showEmailError('Please enter a valid email address');
+        return false;
+    }
+    
+    notification_email = emailValue;
+    await chrome.storage.sync.set({notification_email: notification_email});
+    return true;
+};
+
+// Load settings and email
+chrome.storage.sync.get(['settings', 'notification_email']).then(data => {
     active_settings = data.settings;
+    notification_email = data.notification_email || '';
+    
+    // Set email input value
+    if (email_input) {
+        email_input.value = notification_email;
+    }
+    
+    // Add toggle settings
     for (const [setting_key, title] of Object.entries(settings_toggles)) {
         const item = add_setting_toggle(setting_key, title);
         settings_section.appendChild(item);
     }
 });
+
+// Handle email input changes
+if (email_input) {
+    email_input.addEventListener('blur', async () => {
+        await saveNotificationEmail();
+    });
+    
+    email_input.addEventListener('keypress', async (event) => {
+        if (event.key === 'Enter') {
+            const saved = await saveNotificationEmail();
+            if (saved) {
+                email_input.blur();
+            }
+        }
+    });
+}
