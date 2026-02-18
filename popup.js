@@ -47,11 +47,14 @@ const add_setting_toggle = (setting_key, title) => {
 const settings_section = document.getElementById('settings_section');
 const email_input = document.getElementById('notification_email');
 
+// Email validation constants
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const ERROR_DISPLAY_DURATION_MS = 3000;
+
 // Email validation function
 const isValidEmail = (email) => {
     if (!email) return true; // Allow empty email
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email);
+    return EMAIL_REGEX.test(email);
 };
 
 // Show validation error
@@ -68,7 +71,7 @@ const showEmailError = (message) => {
     errorDiv.textContent = message;
     setTimeout(() => {
         errorDiv.textContent = '';
-    }, 3000);
+    }, ERROR_DISPLAY_DURATION_MS);
 };
 
 // Save notification email
