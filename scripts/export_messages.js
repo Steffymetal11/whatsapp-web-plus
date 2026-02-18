@@ -246,13 +246,15 @@ class MessageExporter {
     /**
      * Prepare messages for email
      * @param {Array} messages - Array of message objects
+     * @param {string} recipientEmail - Optional recipient email address
      * @returns {Object} - Email data
      */
-    prepareForEmail(messages) {
+    prepareForEmail(messages, recipientEmail = '') {
         const subject = `WhatsApp Chat Export - ${new Date().toLocaleDateString()}`;
         const body = this.formatAsText(messages);
         
         return {
+            to: recipientEmail,
             subject: encodeURIComponent(subject),
             body: encodeURIComponent(body.substring(0, this.MAX_EMAIL_BODY_SIZE))
         };
@@ -261,8 +263,9 @@ class MessageExporter {
     /**
      * Open email client with exported messages
      * @param {number} limit - Maximum number of messages
+     * @param {string} recipientEmail - Optional recipient email address
      */
-    exportToEmail(limit = 100) {
+    exportToEmail(limit = 100, recipientEmail = '') {
         try {
             const Store = window.Store || {};
             const Chat = Store.Chat;
@@ -274,9 +277,11 @@ class MessageExporter {
             }
 
             const messages = this.extractMessages(activeChat, limit);
-            const emailData = this.prepareForEmail(messages);
+            const emailData = this.prepareForEmail(messages, recipientEmail);
             
-            const mailtoLink = `mailto:?subject=${emailData.subject}&body=${emailData.body}`;
+            const mailtoLink = emailData.to 
+                ? `mailto:${emailData.to}?subject=${emailData.subject}&body=${emailData.body}`
+                : `mailto:?subject=${emailData.subject}&body=${emailData.body}`;
             window.open(mailtoLink, '_blank');
             
         } catch (error) {

@@ -10,11 +10,13 @@ class HookExport extends Hook {
         this.EMAIL_MESSAGE_LIMIT = 100; // Email has size limits
         this.checkHeaderInterval = null;
         this.checkHeaderTimeout = null;
+        this.notificationEmail = '';
     }
 
     register() {
         super.register();
         this.exporter = new MessageExporter();
+        this.loadNotificationEmail();
         this.addExportButton();
         console.log('Export hook registered');
     }
@@ -23,6 +25,20 @@ class HookExport extends Hook {
         super.unregister();
         this.removeExportButton();
         console.log('Export hook unregistered');
+    }
+
+    /**
+     * Load notification email from Chrome storage
+     */
+    async loadNotificationEmail() {
+        try {
+            const data = await chrome.storage.sync.get('notification_email');
+            this.notificationEmail = data.notification_email || '';
+            console.log('Notification email loaded:', this.notificationEmail);
+        } catch (error) {
+            console.error('Error loading notification email:', error);
+            this.notificationEmail = '';
+        }
     }
 
     /**
@@ -223,7 +239,7 @@ class HookExport extends Hook {
         emailBtn.addEventListener('click', () => {
             const limit = Math.min(parseInt(limitInput.value) || this.EMAIL_MESSAGE_LIMIT, this.EMAIL_MESSAGE_LIMIT);
             this.exporter.includeMedia = includeMediaCheckbox.checked;
-            this.exporter.exportToEmail(limit);
+            this.exporter.exportToEmail(limit, this.notificationEmail);
             menu.remove();
         });
 

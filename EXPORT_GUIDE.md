@@ -17,7 +17,8 @@ WhatsApp-Web-Plus now includes a powerful message export feature that allows you
 
 1. Click on the WhatsApp-Web-Plus extension icon in your browser
 2. In the Settings popup, make sure "Export messages" is enabled (toggle should be ON)
-3. Refresh WhatsApp Web if you just enabled the feature
+3. **Optional**: Enter an email address in the "Notification Email" field to pre-fill the recipient when exporting via email
+4. Refresh WhatsApp Web if you just enabled the feature
 
 ### Exporting a Chat
 
@@ -56,7 +57,8 @@ The export menu provides several options:
 1. Set the number of messages (max 100 for email)
 2. Click **📧 Email**
 3. Your default email client will open with a pre-filled email containing the chat export
-4. Add recipient(s) and send the email
+4. If you configured a notification email in the extension settings, it will be pre-filled as the recipient
+5. Add or modify recipient(s) and send the email
 
 ## Understanding Export Formats
 

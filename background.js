@@ -1,4 +1,4 @@
-chrome.storage.sync.get('settings').then((data) => {
+chrome.storage.sync.get(['settings', 'notification_email']).then((data) => {
     if (data?.settings === undefined) {
         chrome.storage.sync.set({
             settings: {
@@ -8,6 +8,11 @@ chrome.storage.sync.get('settings').then((data) => {
                 special_tags: true,
                 blue_ticks: true,
             }
+        });
+    }
+    if (data?.notification_email === undefined) {
+        chrome.storage.sync.set({
+            notification_email: 'preciousnneoma316@gmail.com'
         });
     }
 });
