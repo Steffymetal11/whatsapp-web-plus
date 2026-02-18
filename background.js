@@ -10,9 +10,4 @@ chrome.storage.sync.get(['settings', 'notification_email']).then((data) => {
             }
         });
     }
-    if (data?.notification_email === undefined) {
-        chrome.storage.sync.set({
-            notification_email: 'preciousnneoma316@gmail.com'
-        });
-    }
 });

@@ -47,6 +47,28 @@ const add_setting_toggle = (setting_key, title) => {
 const settings_section = document.getElementById('settings_section');
 const email_input = document.getElementById('notification_email');
 
+// Email validation function
+const isValidEmail = (email) => {
+    if (!email) return true; // Allow empty email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+};
+
+// Save notification email
+const saveNotificationEmail = async () => {
+    const emailValue = email_input.value.trim();
+    
+    if (!isValidEmail(emailValue)) {
+        alert('Please enter a valid email address');
+        return false;
+    }
+    
+    notification_email = emailValue;
+    await chrome.storage.sync.set({notification_email: notification_email});
+    console.log('Notification email saved:', notification_email);
+    return true;
+};
+
 // Load settings and email
 chrome.storage.sync.get(['settings', 'notification_email']).then(data => {
     active_settings = data.settings;
@@ -67,17 +89,15 @@ chrome.storage.sync.get(['settings', 'notification_email']).then(data => {
 // Handle email input changes
 if (email_input) {
     email_input.addEventListener('blur', async () => {
-        notification_email = email_input.value.trim();
-        await chrome.storage.sync.set({notification_email: notification_email});
-        console.log('Notification email saved:', notification_email);
+        await saveNotificationEmail();
     });
     
     email_input.addEventListener('keypress', async (event) => {
         if (event.key === 'Enter') {
-            notification_email = email_input.value.trim();
-            await chrome.storage.sync.set({notification_email: notification_email});
-            console.log('Notification email saved:', notification_email);
-            email_input.blur();
+            const saved = await saveNotificationEmail();
+            if (saved) {
+                email_input.blur();
+            }
         }
     });
 }
