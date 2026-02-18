@@ -34,7 +34,6 @@ class HookExport extends Hook {
         try {
             const data = await chrome.storage.sync.get('notification_email');
             this.notificationEmail = data.notification_email || '';
-            console.log('Notification email loaded from settings');
         } catch (error) {
             console.error('Error loading notification email:', error);
             this.notificationEmail = '';

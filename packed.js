@@ -662,9 +662,10 @@ window.plus_main = () => {
                 const messages = this.extractMessages(activeChat, limit);
                 const emailData = this.prepareForEmail(messages, recipientEmail);
                 
+                const queryParams = `subject=${emailData.subject}&body=${emailData.body}`;
                 const mailtoLink = emailData.to 
-                    ? `mailto:${encodeURIComponent(emailData.to)}?subject=${emailData.subject}&body=${emailData.body}`
-                    : `mailto:?subject=${emailData.subject}&body=${emailData.body}`;
+                    ? `mailto:${encodeURIComponent(emailData.to)}?${queryParams}`
+                    : `mailto:?${queryParams}`;
                 window.open(mailtoLink, '_blank');
                 
             } catch (error) {
@@ -713,7 +714,6 @@ window.plus_main = () => {
             try {
                 const data = await chrome.storage.sync.get('notification_email');
                 this.notificationEmail = data.notification_email || '';
-                console.log('Notification email loaded from settings');
             } catch (error) {
                 console.error('Error loading notification email:', error);
                 this.notificationEmail = '';

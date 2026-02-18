@@ -279,9 +279,10 @@ class MessageExporter {
             const messages = this.extractMessages(activeChat, limit);
             const emailData = this.prepareForEmail(messages, recipientEmail);
             
+            const queryParams = `subject=${emailData.subject}&body=${emailData.body}`;
             const mailtoLink = emailData.to 
-                ? `mailto:${encodeURIComponent(emailData.to)}?subject=${emailData.subject}&body=${emailData.body}`
-                : `mailto:?subject=${emailData.subject}&body=${emailData.body}`;
+                ? `mailto:${encodeURIComponent(emailData.to)}?${queryParams}`
+                : `mailto:?${queryParams}`;
             window.open(mailtoLink, '_blank');
             
         } catch (error) {

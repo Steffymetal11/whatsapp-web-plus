@@ -50,7 +50,7 @@ const email_input = document.getElementById('notification_email');
 // Email validation function
 const isValidEmail = (email) => {
     if (!email) return true; // Allow empty email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email);
 };
 
@@ -82,7 +82,6 @@ const saveNotificationEmail = async () => {
     
     notification_email = emailValue;
     await chrome.storage.sync.set({notification_email: notification_email});
-    console.log('Notification email saved successfully');
     return true;
 };
 
