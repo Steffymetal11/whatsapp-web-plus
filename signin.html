@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Manager Portal - Sign In</title>
+    <link rel="stylesheet" href="signin.css">
+</head>
+<body>
+    <div class="signin-container">
+        <div class="signin-header">
+            <div class="logo">
+                <svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="25" cy="25" r="24" stroke="#0066cc" stroke-width="2"/>
+                    <path d="M25 15V25L32 32" stroke="#0066cc" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <h1>Account Manager Portal</h1>
+            <p class="subtitle">Secure Access System</p>
+        </div>
+
+        <div class="signin-box">
+            <div class="account-info">
+                <h2>Account Manager File</h2>
+                <div class="manager-details">
+                    <div class="detail-row">
+                        <span class="label">Account Manager:</span>
+                        <span class="value">Bill Hoechst</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Account ID:</span>
+                        <span class="value">BH-20240215-7843</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Department:</span>
+                        <span class="value">Financial Services</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Status:</span>
+                        <span class="value status-restricted">RESTRICTED</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="access-denied-banner">
+                <div class="denied-icon">⛔</div>
+                <h2 class="denied-text">ACCESS DENIED!!</h2>
+                <p class="denied-message">You do not have permission to access this account</p>
+            </div>
+
+            <form class="signin-form" onsubmit="return false;">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Enter your username" disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" disabled>
+                </div>
+
+                <button type="submit" class="signin-button" disabled>Sign In</button>
+
+                <div class="error-details">
+                    <h3>Authentication Error Details:</h3>
+                    <ul>
+                        <li><strong>Error Code:</strong> ERR_403_FORBIDDEN</li>
+                        <li><strong>Timestamp:</strong> <span id="timestamp"></span></li>
+                        <li><strong>Reason:</strong> Insufficient clearance level</li>
+                        <li><strong>Required Level:</strong> Level 5 Authorization</li>
+                        <li><strong>Your Level:</strong> Level 2 (Standard User)</li>
+                    </ul>
+                    <p class="help-text">
+                        If you believe you should have access to this account, please contact your system administrator 
+                        or email <a href="mailto:support@accountmanager.com">support@accountmanager.com</a>
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <footer class="signin-footer">
+            <p>&copy; 2024 Account Manager Portal. All rights reserved.</p>
+            <p class="security-notice">🔒 This is a secure area. All access attempts are logged and monitored.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Set current timestamp
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+    </script>
+</body>
+</html>
